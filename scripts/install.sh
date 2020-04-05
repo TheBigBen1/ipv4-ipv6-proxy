@@ -1,4 +1,7 @@
 #!/bin/sh
+#bash <(curl -s "https://raw.githubusercontent.com/dukaev/ipv6_proxy/master/scripts/install.sh")
+# sudo passwd ubuntu
+# test
 random() {
 	tr </dev/urandom -dc A-Za-z0-9 | head -c5
 	echo
@@ -6,11 +9,12 @@ random() {
 
 array=(1 2 3 4 5 6 7 8 9 0 a b c d e f)
 gen64() {
-	ip64() {
-		echo "${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}"
-	}
+    ip64() {
+    	echo "${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}"
+    }
 	echo "$1:$(ip64):$(ip64):$(ip64):$(ip64)"
 }
+
 install_3proxy() {
     echo "installing 3proxy"
     URL="https://github.com/z3APA3A/3proxy/archive/3proxy-0.8.6.tar.gz"
@@ -18,15 +22,15 @@ install_3proxy() {
     cd 3proxy-3proxy-0.8.6
     make -f Makefile.Linux
     mkdir -p /usr/local/etc/3proxy/{bin,logs,stat}
-    cp src/3proxy /usr/local/etc/3proxy/bin/
+    sudo cp src/3proxy /usr/local/etc/3proxy/bin/
     cp ./scripts/rc.d/proxy.sh /etc/init.d/3proxy
-    chmod +x /etc/init.d/3proxy
-    chkconfig 3proxy on
+    sudo chmod +x /etc/init.d/3proxy
+    yes test | update-rc.d 3proxy start 20 3 4 5 $test
     cd $WORKDIR
 }
 
 gen_3proxy() {
-    cat <<EOF
+    sudo cat <<EOF
 daemon
 maxconn 1000
 nscache 65536
@@ -78,15 +82,20 @@ gen_ifconfig() {
 $(awk -F "/" '{print "ifconfig eth0 inet6 add " $5 "/64"}' ${WORKDATA})
 EOF
 }
+
+
+
+
 echo "installing apps"
-yum -y install gcc net-tools bsdtar zip >/dev/null
+#yum -y install gcc net-tools bsdtar zip >/dev/null
+sudo apt-get install gcc net-tools bsdtar zip >/dev/null
 
 install_3proxy
 
 echo "working folder = /home/proxy-installer"
 WORKDIR="/home/proxy-installer"
 WORKDATA="${WORKDIR}/data.txt"
-mkdir $WORKDIR && cd $_
+sudo mkdir $WORKDIR && cd $_
 
 IP4=$(curl -4 -s ifconfig.co)
 IP6=$(curl -6 -s ifconfig.co | cut -f1-4 -d':')
@@ -99,18 +108,19 @@ read COUNT
 FIRST_PORT=10000
 LAST_PORT=$(($FIRST_PORT + $COUNT))
 
+sudo chmod a+rwx $WORKDIR/
 gen_data >$WORKDIR/data.txt
 gen_iptables >$WORKDIR/boot_iptables.sh
 gen_ifconfig >$WORKDIR/boot_ifconfig.sh
-chmod +x boot_*.sh /etc/rc.local
+sudo chmod +x boot_*.sh /etc/rc.local
 
-gen_3proxy >/usr/local/etc/3proxy/3proxy.cfg
+gen_3proxy > sudo /usr/local/etc/3proxy/3proxy.cfg
 
-cat >>/etc/rc.local <<EOF
-bash ${WORKDIR}/boot_iptables.sh
-bash ${WORKDIR}/boot_ifconfig.sh
+cat >> sudo /etc/rc.local <<EOF
+sudo bash /home/proxy-installer/boot_iptables.sh
+bash /home/proxy-installer/boot_ifconfig.sh
 ulimit -n 2048
-service 3proxy start
+sudo service 3proxy start
 EOF
 
 bash /etc/rc.local
