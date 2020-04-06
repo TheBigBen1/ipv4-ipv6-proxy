@@ -1,4 +1,5 @@
 #!/bin/sh
+#bash <(curl -s "https://raw.githubusercontent.com/TheBigBen1/ipv4-ipv6-proxy/master/scripts/install.sh")
 random() {
 	tr </dev/urandom -dc A-Za-z0-9 | head -c5
 	echo
