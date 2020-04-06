@@ -75,6 +75,15 @@ gen_ifconfig() {
 $(awk -F "/" '{print "ifconfig eth0 inet6 add " $5 "/64"}' ${WORKDATA})
 EOF
 }
+
+gen_delete() {
+    cat <<EOF
+$(awk -F "/" '{print "ifconfig eth0 inet6 del " $5 "/64"}' ${WORKDATA})
+EOF
+}
+
+
+
 echo "installing apps"
 yum -y install gcc net-tools bsdtar zip >/dev/null
 
@@ -102,6 +111,9 @@ echo "creating iptables"
 gen_iptables >$WORKDIR/boot_iptables.sh
 echo "creating ipconfig"
 gen_ifconfig >$WORKDIR/boot_ifconfig.sh
+
+gen_delete >$WORKDIR/boot_igdelete.sh
+
 chmod +x boot_*.sh /etc/rc.local
 
 
